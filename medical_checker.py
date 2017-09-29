@@ -5,7 +5,8 @@ import time
 from bs4 import BeautifulSoup
 import sys
 
-u_choice = 'Нафтизин'
+
+#u_choice = 'Нафтизин'
 
 class Tracker():
 
@@ -25,37 +26,37 @@ class Tracker():
         return r.text
 
 
-    def get_consists(self):
-        html = self.get_html(self.make_link(u_choice))
-        soup = BeautifulSoup(html, "html.parser")
-        names = soup.find_all('i')
-        consists = soup.find_all('p')
-        active_substance = {'active_substance': consists[0].text}
-        helper_substance = {'helper_substance':  consists[1].text.replace(u'\xa0', ' ')}
-        #print(active_substance, helper_substance)
-        return active_substance, helper_substance
+    # def get_consists(self):
+    #     html = self.get_html(self.make_link(u_choice))
+    #     soup = BeautifulSoup(html, "html.parser")
+    #     names = soup.find_all('i')
+    #     consists = soup.find_all('p')
+    #     active_substance = {'active_substance': consists[0].text}
+    #     helper_substance = {'helper_substance':  consists[1].text.replace(u'\xa0', ' ')}
+    #     #print(active_substance, helper_substance)
+    #     return active_substance, helper_substance
+    #
+    # def get_medicinal_form(self):
+    #     html = self.get_html(self.make_link(u_choice))
+    #     soup = BeautifulSoup(html, "html.parser")
+    #     names = soup.find_all('i')
+    #     consists = soup.find_all('p')
+    #     medicinal_form = {'medicinal_form': consists[2].text.replace(u'\xa0', ' ') + consists[3].text.replace(u'\xa0', ' ')}
+    #     print(medicinal_form)
+    #
+    #
+    # def get_pharm_prop(self):
+    #     html = self.get_html(self.make_link(u_choice))
+    #     soup = BeautifulSoup(html, "html.parser")
+    #     names = soup.find_all('i')
+    #     consists = soup.find_all('p')
+    #     pharm_prop = {'pharm_prop': consists[5].text + consists[6].text,
+    #                   'pharm_prop_kin': consists[7].text + consists[8].text + consists[9].text + consists[10].text}
+    #     print(pharm_prop['pharm_prop_kin'])
 
-    def get_medicinal_form(self):
-        html = self.get_html(self.make_link(u_choice))
-        soup = BeautifulSoup(html, "html.parser")
-        names = soup.find_all('i')
-        consists = soup.find_all('p')
-        medicinal_form = {'medicinal_form': consists[2].text.replace(u'\xa0', ' ') + consists[3].text.replace(u'\xa0', ' ')}
-        print(medicinal_form)
 
-
-    def get_pharm_prop(self):
-        html = self.get_html(self.make_link(u_choice))
-        soup = BeautifulSoup(html, "html.parser")
-        names = soup.find_all('i')
-        consists = soup.find_all('p')
-        pharm_prop = {'pharm_prop': consists[5].text + consists[6].text,
-                      'pharm_prop_kin': consists[7].text + consists[8].text + consists[9].text + consists[10].text}
-        print(pharm_prop['pharm_prop_kin'])
-
-
-    def eat_method(self):
-        html = self.get_html(self.make_link(u_choice))
+    def eat_method(self, html):
+        #html = self.get_html(self.make_link(u_choice))
         soup = BeautifulSoup(html, "html.parser")
         list = []
         names = soup.find('div', class_='goog-trans-section')
@@ -79,12 +80,12 @@ class Tracker():
         return list
 
 
-    def get_msg_substance(self):
+    def get_msg_substance(self, list):
         # html = self.get_html(self.make_link(u_choice))
         # soup = BeautifulSoup(html, "html.parser")
         # names = soup.find('div', class_='goog-trans-section')
         # all_el = names.find_all(class_=False)
-        list = self.eat_method()
+        #list = self.eat_method()
         substance = list[0]
         indications = list[1]
         anti_indications = list[2]
@@ -107,6 +108,8 @@ class Tracker():
                             msg =='Біотрансформація.' or \
                             msg == '®' or \
                             msg == '® ' or \
+                            msg == 'In vitro' or \
+                            msg == 'In vitro ' or \
                             msg == 'Виведення.':
                 pass
             else:
@@ -117,7 +120,7 @@ class Tracker():
             if i not in msg_substance:
                 msg_substance.append(i)
         msg_substance = ''.join(msg_substance)
-        print(msg_substance)                                                                         #       end here
+        #print(msg_substance)                                                                         #       end here
 
 
         list_indications = []                                           # this part of code for MSG about indications
@@ -131,7 +134,7 @@ class Tracker():
             if i not in msg_indications:
                 msg_indications.append(i)
         msg_indications = ''.join(msg_indications)
-        print(msg_indications)                                                    #end here
+        #print(msg_indications)                                                    #end here
 
 
         list_anti_indications = []                                 # this part of code for MSG about antiindications
@@ -167,13 +170,13 @@ class Tracker():
                pass
             else:
                 list_anti_indications.append(msg2+'\n')
-        print(list_anti_indications)
+        #print(list_anti_indications)
         msg_anti_indications = []
         for i in list_anti_indications:
             if i not in msg_anti_indications:
                 msg_anti_indications.append(i)
         msg_anti_indications = ''.join(msg_anti_indications)
-        print(msg_anti_indications)                                                     # end here
+        #print(msg_anti_indications)                                                     # end here
 
 
         list_meth_eat = []
@@ -196,13 +199,13 @@ class Tracker():
                 pass
             else:
                 list_meth_eat.append(msg3+'\n')
-        print(list_meth_eat)
+        #print(list_meth_eat)
         msg_meth_eat = []
         for i in list_meth_eat:
             if i not in msg_meth_eat:
                 msg_meth_eat.append(i)
         msg_meth_eat = ''.join(msg_meth_eat)
-        print(msg_meth_eat)
+        #print(msg_meth_eat)
 
         list_affects = []
         b = affects -1
@@ -232,11 +235,31 @@ class Tracker():
             if i not in msg_affects:
                 msg_affects.append(i)
         msg_affects = ''.join(msg_affects)
-        print(msg_affects)
+        #print(msg_affects)
+        result_dict = {
+            'substance':msg_substance,
+            'indications': msg_indications,
+            'anti_indications': msg_indications,
+            'method_eat': msg_meth_eat,
+            'affects': msg_affects
+        }
+        return result_dict
+
+    
+
+
+
+    def get_msg_bot(self, u_choice):
+        list = self.eat_method(self.get_html(self.make_link(u_choice)))
+        msg = self.get_msg_substance(list)
+        print(msg)
+
+
+
 
 
 track = Tracker()
-track.get_msg_substance()
+track.get_msg_bot('Но-шпа')
 # if track.eat_method() == False:
 #     print('False')
 # print(track.eat_method()[3])
