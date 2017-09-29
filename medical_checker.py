@@ -4,6 +4,8 @@ import requests
 import time
 from bs4 import BeautifulSoup
 import sys
+import psycopg2
+from learn_env.sergeyGit.config import DB_PWD
 
 
 #u_choice = 'Нафтизин'
@@ -77,15 +79,14 @@ class Tracker():
                 list.append(i)
             elif all_el[i] == soup.find('h2', id='Побочные_эффекты'):
                 list.append(i)
-        return list
+
+        image_obj = soup.find('div', class_='swiper-wrapper')
+        image_link = 'http:' + image_obj.find('img').get('src')
+        obj_list = [list, image_link]
+        return obj_list
 
 
     def get_msg_substance(self, list):
-        # html = self.get_html(self.make_link(u_choice))
-        # soup = BeautifulSoup(html, "html.parser")
-        # names = soup.find('div', class_='goog-trans-section')
-        # all_el = names.find_all(class_=False)
-        #list = self.eat_method()
         substance = list[0]
         indications = list[1]
         anti_indications = list[2]
@@ -243,23 +244,43 @@ class Tracker():
             'method_eat': msg_meth_eat,
             'affects': msg_affects
         }
+
         return result_dict
-
-    
-
 
 
     def get_msg_bot(self, u_choice):
-        list = self.eat_method(self.get_html(self.make_link(u_choice)))
+
+        obj_list = self.eat_method(self.get_html(self.make_link(u_choice)))
+        list = obj_list[0]
+        image_link = obj_list[1]
+        print(image_link)
         msg = self.get_msg_substance(list)
-        print(msg)
-
-
-
-
+        print(msg['substance'])
+        try:
+            con = psycopg2.connect(host='localhost', user='sergeymoroz', password=DB_PWD, database='test1')
+        except Exception as e:
+            print(e)
+        C = con.cursor()
+        C.execute("""insert into pharm1 (name,
+ substance,
+  indications,
+   anti_indications,
+    method_eat,
+     affects,
+      imagelink) VALUES ('{pharm_name}', '{substances}', '{indicat}', '{anti_ind}', '{meth_eat}', '{affect}', '{image}') returning id, affects""".format(
+                                                  pharm_name=u_choice,
+                                                  substances=str(msg['substance']),
+                                                  indicat=str(msg['anti_indications']),
+                                                  anti_ind=str(msg['anti_indications']),
+                                                  meth_eat=str(msg['method_eat']),
+                                                  affect=str(msg['affects']),
+                                                  image=image_link))
+        con.commit()
+        rows = C.fetchall()
+        print(rows)
 
 track = Tracker()
-track.get_msg_bot('Но-шпа')
+track.get_msg_bot('Солпадеин')
 # if track.eat_method() == False:
 #     print('False')
 # print(track.eat_method()[3])
