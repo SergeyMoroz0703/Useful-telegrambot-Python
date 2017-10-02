@@ -28,35 +28,6 @@ class Tracker():
         return r.text
 
 
-    # def get_consists(self):
-    #     html = self.get_html(self.make_link(u_choice))
-    #     soup = BeautifulSoup(html, "html.parser")
-    #     names = soup.find_all('i')
-    #     consists = soup.find_all('p')
-    #     active_substance = {'active_substance': consists[0].text}
-    #     helper_substance = {'helper_substance':  consists[1].text.replace(u'\xa0', ' ')}
-    #     #print(active_substance, helper_substance)
-    #     return active_substance, helper_substance
-    #
-    # def get_medicinal_form(self):
-    #     html = self.get_html(self.make_link(u_choice))
-    #     soup = BeautifulSoup(html, "html.parser")
-    #     names = soup.find_all('i')
-    #     consists = soup.find_all('p')
-    #     medicinal_form = {'medicinal_form': consists[2].text.replace(u'\xa0', ' ') + consists[3].text.replace(u'\xa0', ' ')}
-    #     print(medicinal_form)
-    #
-    #
-    # def get_pharm_prop(self):
-    #     html = self.get_html(self.make_link(u_choice))
-    #     soup = BeautifulSoup(html, "html.parser")
-    #     names = soup.find_all('i')
-    #     consists = soup.find_all('p')
-    #     pharm_prop = {'pharm_prop': consists[5].text + consists[6].text,
-    #                   'pharm_prop_kin': consists[7].text + consists[8].text + consists[9].text + consists[10].text}
-    #     print(pharm_prop['pharm_prop_kin'])
-
-
     def eat_method(self, html):
         #html = self.get_html(self.make_link(u_choice))
         soup = BeautifulSoup(html, "html.parser")
@@ -251,7 +222,10 @@ class Tracker():
     def get_msg_bot(self, u_choice):
 
         obj_list = self.eat_method(self.get_html(self.make_link(u_choice)))
-        list = obj_list[0]
+        try:
+            list = obj_list[0]
+        except:
+            print('Не корректное название препарата')
         image_link = obj_list[1]
         print(image_link)
         msg = self.get_msg_substance(list)
@@ -280,7 +254,7 @@ class Tracker():
         print(rows)
 
 track = Tracker()
-track.get_msg_bot('Солпадеин')
+track.get_msg_bot('Виагра')
 # if track.eat_method() == False:
 #     print('False')
 # print(track.eat_method()[3])
