@@ -5,7 +5,7 @@ import time
 from bs4 import BeautifulSoup
 import sys
 import psycopg2
-from learn_env.sergeyGit.config import DB_PWD
+from learn_env.sergeyGit.config import DB_PWD, new_bad_list
 
 
 class Tracker():
@@ -18,6 +18,17 @@ class Tracker():
         link = self.url + '/' + u_choice + '/'
         #print(link)
         return link
+
+
+    def check_is_exist(self, u_choice):
+        soup = BeautifulSoup(self.get_html(self.make_link(u_choice)), "html.parser")
+        check = soup.find_all('div', class_='goog-trans-section')
+        if check:
+            print('True')
+            return True
+        else:
+            print('False')
+            return False
 
 
     def get_html(self, url):
@@ -46,9 +57,12 @@ class Tracker():
                 list.append(i)
             elif all_el[i] == soup.find('h2', id='Способ_применения_и_дозы'):
                 list.append(i)
+            elif all_el[i] == soup.find('h2', id='Передозировка'):
+                list.append(i)
             elif all_el[i] == soup.find('h2', id='Побочные_эффекты'):
                 list.append(i)
-
+            else:
+                pass
         image_obj = soup.find('div', class_='swiper-wrapper')
         try:
             image_link = 'http:' + image_obj.find('img').get('src')
@@ -64,43 +78,21 @@ class Tracker():
         indications = list[1]
         anti_indications = list[2]
         method_to_eat = list[3]
-        affects = list[4]
+        overdose = list[4]
+        try:
+            affects = list[5]
+        except:
+            affects = list[4]
         list_substance =[]                                              #this part of code is for MSG about substance
         z = substance
         while z < (indications-1):
             z = z+1
             msg = all_el[z].text
-            if msg == 'діюча речовина:' or \
-                            msg == 'допоміжні речовини:' or \
-                            msg == 'допоміжні речовини: ' or \
-                            msg == 'діючі речовини: ' or \
-                            msg == 'діючі речовини:' or \
-                            msg == 'Основні фізико-хімічні властивості:' or \
-                            msg == 'Основні фізико-хімічні властивості: ' or \
-                            msg == 'Абсорбція' or \
-                            msg == 'Розподіл.' or \
-                            msg =='Біотрансформація.' or \
-                            msg == '®' or \
-                            msg == 'Фармакокінетика.' or \
-                            msg == '® ' or \
-                            msg == 'діюча речовина: ' or \
-                            msg == 'допоміжні речовини' or \
-                            msg == 'Механізм дії.' or \
-                            msg == 'In vitro' or \
-                            msg == 'In vitro ' or \
-                            msg == 'Вплив на фармакодинаміку.' or \
-                            msg == 'in vitro' or \
-                            msg == 'Пацієнти літнього віку.' or \
-                            msg == 'Елімінація.' or \
-                            msg == 'Абсорбція.' or \
-                            msg == 'Ниркова недостатність.' or \
-                            msg == 'Печінкова недостатність.' or \
-                            len(msg) < 5 or \
-                            msg == 'Виведення.':
+            if msg in new_bad_list:
                 pass
             else:
                 list_substance.append(msg+'\n')
-        print(list_substance)
+        #print(list_substance)
         msg_substance = []
         for i in list_substance:
             if i not in msg_substance:
@@ -115,6 +107,7 @@ class Tracker():
             x = x+1
             msg1 = all_el[x].text
             list_indications.append(msg1 + '\n')
+        #print(list_indications)
         msg_indications = []
         for i in list_indications:
             if i not in msg_indications:
@@ -128,31 +121,7 @@ class Tracker():
         while c < method_to_eat -1:
             c = c+1
             msg2 = all_el[c].text
-            if msg2 == 'Спричинена вмістом парацетамолу:' or \
-                            msg2 == 'Спричинена вмістом кодеїну: ' or \
-                            msg2 == 'Спричинена вмістом кофеїну: ' or \
-                            msg2 == 'Здатність впливати на швидкість реакції при керуванні автотранспортом або ' \
-                                    'іншими механізмами.' or \
-                            msg2 == 'Застосування у період вагітності або годування груддю.' or \
-                            msg2 == 'Вагітність. ' or \
-                            msg2 == 'Годування груддю. ' or \
-                            msg2 == '®' or \
-                            msg2 == 'Дослідження in vitro.' or \
-                            msg2 == '® ' or \
-                            msg2 == ' in vitro.' or \
-                            msg2 == 'in vitro' or \
-                            msg2 == 'Дослідження in vivo.' or \
-                            msg2 == ' in vivo.' or \
-                            msg2 == 'in vivo.' or \
-                            msg2 == 'Підвищена чутливість до активної речовини або будь-якої з допоміжних' \
-                                    ' речовин препарату.' or \
-                            msg2 == '50' or \
-                            msg2 == 'Втрата слуху.' or \
-                            msg2 == 'Захворювання, що передаються статевим шляхом.' or \
-                            msg2 == 'Вплив на кровотечі. ' or \
-                            msg2 == '®' or \
-                            msg2 == 'Вплив на зір. ':
-
+            if msg2 in new_bad_list:
                pass
             else:
                 list_anti_indications.append(msg2+'\n')
@@ -167,21 +136,10 @@ class Tracker():
 
         list_meth_eat = []
         v = method_to_eat -1
-        while v < affects -1:
+        while v < overdose -1:
             v = v+1
             msg3 = all_el[v].text
-            if msg3 == 'Дорослі:' or \
-                msg3 == 'Дорослі: ' or \
-                msg3 == 'Діти. ' or \
-                msg3 == 'Діти.' or \
-                msg3 == 'Симптоми передозування парацетамолом.' or \
-                msg3 == 'Діти' or \
-                msg3 == 'Симптоми передозування кофеїном. ' or \
-                msg3 == 'Спосіб введення.' or \
-                msg3 == '®' or \
-                msg3 == '® ' or \
-                msg3 == '®\xa0' or \
-                msg3 == 'Симптоми передозування кодеїном.':
+            if msg3 in new_bad_list:
                 pass
             else:
                 list_meth_eat.append(msg3+'\n')
@@ -193,39 +151,32 @@ class Tracker():
         msg_meth_eat = ''.join(msg_meth_eat)
         #print(msg_meth_eat)
 
+
+
+        list_overdose = []
+        v = overdose -1
+        while v < affects - 1:
+            v = v+1
+            msg = all_el[v].text
+            if msg in new_bad_list:
+                pass
+            else:
+                list_overdose.append(msg+'\n')
+        msg_overdose = []
+        for i in list_overdose:
+            if i not in msg_overdose:
+                msg_overdose.append(i)
+        msg_overdose = ''.join(msg_overdose)
+
+
+
+
         list_affects = []
         b = affects -1
         while b < len(all_el) -13: #len(all_el) -2:
             b = b+1
             msg4 = all_el[b].text
-            if msg4 == 'З боку кровоносної та лімфатичної системи:' or \
-                msg4 == 'З боку імунної системи:' or \
-                msg4 == 'З боку шкіри та підшкірної тканини:' or \
-                msg4 == 'Порушення з боку гепатобіліарної системи:' or \
-                msg4 == 'З боку центральної нервової системи:' or \
-                msg4 == 'Психічні порушення:' or \
-                msg4 == 'З боку серця:' or \
-                msg4 == 'З боку нирок і сечовидільної системи' or \
-                msg4 == 'Інші:' or \
-                msg4 == 'Порушення з боку органів дихання, грудної клітини та середостіння:' or \
-                msg4 == '® ' or \
-                msg4 == 'з боку нервової системи' or \
-                msg4 == 'З боку нервової системи: ' or \
-                msg4 == 'З боку травного тракту: ' or \
-                msg4 == 'З боку шкіри та підшкірної тканини: ' or \
-                msg4 == 'З боку печінки та жовчовивідних шляхів: ' or \
-                msg4 == 'З боку скелетно-м’язової та сполучної тканин: ' or \
-                msg4 == 'З боку нирок та сечовивідних шляхів: ' or \
-                msg4 == 'Психічні розлади:' or \
-                msg4 == 'З боку травного тракту: ' or \
-                msg4 == 'з боку травного тракту:' or \
-                msg4 == 'з боку імунної системи:' or \
-                msg4 == 'з боку шкіри і підшкірної клітковини:' or \
-                msg4 == 'З боку шкіри та підшкірної тканини: ' or \
-                msg4 == 'Психічні розлади:' or \
-                msg4 == 'З боку дихальної системи, органів грудної клітки та середостіння:' or \
-                msg4 == 'з боку серцево-судинної системи' or \
-                msg4 == 'З боку травного тракту:':
+            if msg4 in new_bad_list:
                 pass
             else:
                 list_affects.append(msg4+'\n')
@@ -241,7 +192,8 @@ class Tracker():
             'indications': msg_indications,
             'anti_indications': msg_anti_indications,
             'method_eat': msg_meth_eat,
-            'affects': msg_affects
+            'affects': msg_affects,
+            'overdose': msg_overdose
         }
 
         return result_dict
@@ -284,11 +236,20 @@ class Tracker():
             msg_method_eat = rows[3]
             msg_affects = rows[4]
             image_link = rows[5]
-            print(msg_substance)
+            rows_msg = {
+                'substance':rows[0],
+                'indications':rows[1],
+                'anti_indications':rows[2],
+                'method_eat':rows[3],
+                'affects':rows[4],
+                'imagelink':rows[5],
+            }
+            return rows_msg
         else:
             obj_list = self.eat_method(self.get_html(self.make_link(u_choice)))
             try:
                 list = obj_list[0]
+                print(obj_list)
             except:
                 print('Не корректное название препарата')
             image_link = obj_list[1]
@@ -298,7 +259,7 @@ class Tracker():
             msg_antiindications = msg['anti_indications']
             msg_method_eat = msg['method_eat']
             msg_affects = msg['affects']
-            print(image_link)
+            msg_overdose = msg['overdose']
 
             try:
                 con = psycopg2.connect(host='localhost', user='sergeymoroz', password=DB_PWD, database='test1')
@@ -314,21 +275,22 @@ class Tracker():
       imagelink) VALUES ('{pharm_name}', '{substances}', '{indicat}', '{anti_ind}', '{meth_eat}', '{affect}', '{image}') returning id, name""".format(
                                                   pharm_name=u_choice,
                                                   substances=str(msg['substance']),
-                                                  indicat=str(msg['anti_indications']),
+                                                  indicat=str(msg['indications']),
                                                   anti_ind=str(msg['anti_indications']),
                                                   meth_eat=str(msg['method_eat']),
                                                   affect=str(msg['affects']),
                                                   image=image_link))
             con.commit()
-            rows = C.fetchall()
-            print(rows)
+            rowss = C.fetchall()
+            print(rowss)
+
+
+            return msg
 
 
 
-track = Tracker()
-track.get_msg_bot('Новирин')
-# if track.eat_method() == False:
-#     print('False')
-# print(track.eat_method()[3])
+# track = Tracker()
+# track.check_is_exist('Виагра')
+
 
 
