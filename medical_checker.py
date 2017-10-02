@@ -8,8 +8,6 @@ import psycopg2
 from learn_env.sergeyGit.config import DB_PWD
 
 
-#u_choice = 'Нафтизин'
-
 class Tracker():
 
     def __init__(self, url='https://tabletki.ua'):
@@ -52,8 +50,12 @@ class Tracker():
                 list.append(i)
 
         image_obj = soup.find('div', class_='swiper-wrapper')
-        image_link = 'http:' + image_obj.find('img').get('src')
-        obj_list = [list, image_link]
+        try:
+            image_link = 'http:' + image_obj.find('img').get('src')
+            obj_list = [list, image_link]
+        except AttributeError:
+            print('Not image for this pharmacy')
+            obj_list = [list, 'no_image_links']
         return obj_list
 
 
@@ -79,14 +81,26 @@ class Tracker():
                             msg == 'Розподіл.' or \
                             msg =='Біотрансформація.' or \
                             msg == '®' or \
+                            msg == 'Фармакокінетика.' or \
                             msg == '® ' or \
+                            msg == 'діюча речовина: ' or \
+                            msg == 'допоміжні речовини' or \
+                            msg == 'Механізм дії.' or \
                             msg == 'In vitro' or \
                             msg == 'In vitro ' or \
+                            msg == 'Вплив на фармакодинаміку.' or \
+                            msg == 'in vitro' or \
+                            msg == 'Пацієнти літнього віку.' or \
+                            msg == 'Елімінація.' or \
+                            msg == 'Абсорбція.' or \
+                            msg == 'Ниркова недостатність.' or \
+                            msg == 'Печінкова недостатність.' or \
+                            len(msg) < 5 or \
                             msg == 'Виведення.':
                 pass
             else:
                 list_substance.append(msg+'\n')
-        #print(list_substance)
+        print(list_substance)
         msg_substance = []
         for i in list_substance:
             if i not in msg_substance:
@@ -196,12 +210,26 @@ class Tracker():
                 msg4 == 'Порушення з боку органів дихання, грудної клітини та середостіння:' or \
                 msg4 == '® ' or \
                 msg4 == 'з боку нервової системи' or \
+                msg4 == 'З боку нервової системи: ' or \
+                msg4 == 'З боку травного тракту: ' or \
+                msg4 == 'З боку шкіри та підшкірної тканини: ' or \
+                msg4 == 'З боку печінки та жовчовивідних шляхів: ' or \
+                msg4 == 'З боку скелетно-м’язової та сполучної тканин: ' or \
+                msg4 == 'З боку нирок та сечовивідних шляхів: ' or \
+                msg4 == 'Психічні розлади:' or \
+                msg4 == 'З боку травного тракту: ' or \
+                msg4 == 'з боку травного тракту:' or \
+                msg4 == 'з боку імунної системи:' or \
+                msg4 == 'з боку шкіри і підшкірної клітковини:' or \
+                msg4 == 'З боку шкіри та підшкірної тканини: ' or \
+                msg4 == 'Психічні розлади:' or \
                 msg4 == 'З боку дихальної системи, органів грудної клітки та середостіння:' or \
                 msg4 == 'з боку серцево-судинної системи' or \
                 msg4 == 'З боку травного тракту:':
                 pass
             else:
                 list_affects.append(msg4+'\n')
+        #print(list_affects)
         msg_affects = []
         for i in list_affects:
             if i not in msg_affects:
@@ -211,7 +239,7 @@ class Tracker():
         result_dict = {
             'substance':msg_substance,
             'indications': msg_indications,
-            'anti_indications': msg_indications,
+            'anti_indications': msg_anti_indications,
             'method_eat': msg_meth_eat,
             'affects': msg_affects
         }
@@ -219,29 +247,71 @@ class Tracker():
         return result_dict
 
 
-    def get_msg_bot(self, u_choice):
-
-        obj_list = self.eat_method(self.get_html(self.make_link(u_choice)))
-        try:
-            list = obj_list[0]
-        except:
-            print('Не корректное название препарата')
-        image_link = obj_list[1]
-        print(image_link)
-        msg = self.get_msg_substance(list)
-        print(msg['substance'])
+    def check_exist_database(self, u_choice):
         try:
             con = psycopg2.connect(host='localhost', user='sergeymoroz', password=DB_PWD, database='test1')
         except Exception as e:
             print(e)
         C = con.cursor()
-        C.execute("""insert into pharm1 (name,
+        C.execute("select name from pharm1 where name = '{name}'".format(name=u_choice))
+        if len(C.fetchall()) > 0:
+            return True
+        else:
+            return False
+
+
+    def get_db_data(self, u_choice):
+        try:
+            con = psycopg2.connect(host='localhost', user='sergeymoroz', password=DB_PWD, database='test1')
+        except Exception as e:
+            print(e)
+        C = con.cursor()
+        # C.execute("select name from pharm1 where name = '{name}'".format(name=u_choice))
+        C.execute(
+                "select substance, indications, anti_indications, method_eat, affects, imagelink from pharm1 where name = '{name}'".format(
+                    name=u_choice))
+        rows = C.fetchone()
+        return rows
+
+
+    def get_msg_bot(self, u_choice):
+        if self.check_exist_database(u_choice) == True:
+            print('Connecting to database')
+            rows = self.get_db_data(u_choice)
+            msg_substance = rows[0]
+            msg_indications = rows[1]
+            msg_antiindications = rows[2]
+            msg_method_eat = rows[3]
+            msg_affects = rows[4]
+            image_link = rows[5]
+            print(msg_substance)
+        else:
+            obj_list = self.eat_method(self.get_html(self.make_link(u_choice)))
+            try:
+                list = obj_list[0]
+            except:
+                print('Не корректное название препарата')
+            image_link = obj_list[1]
+            msg = self.get_msg_substance(list)
+            msg_substance = msg['substance']
+            msg_indications = msg['indications']
+            msg_antiindications = msg['anti_indications']
+            msg_method_eat = msg['method_eat']
+            msg_affects = msg['affects']
+            print(image_link)
+
+            try:
+                con = psycopg2.connect(host='localhost', user='sergeymoroz', password=DB_PWD, database='test1')
+            except Exception as e:
+                print(e)
+            C = con.cursor()
+            C.execute("""insert into pharm1 (name,
  substance,
   indications,
    anti_indications,
     method_eat,
      affects,
-      imagelink) VALUES ('{pharm_name}', '{substances}', '{indicat}', '{anti_ind}', '{meth_eat}', '{affect}', '{image}') returning id, affects""".format(
+      imagelink) VALUES ('{pharm_name}', '{substances}', '{indicat}', '{anti_ind}', '{meth_eat}', '{affect}', '{image}') returning id, name""".format(
                                                   pharm_name=u_choice,
                                                   substances=str(msg['substance']),
                                                   indicat=str(msg['anti_indications']),
@@ -249,12 +319,14 @@ class Tracker():
                                                   meth_eat=str(msg['method_eat']),
                                                   affect=str(msg['affects']),
                                                   image=image_link))
-        con.commit()
-        rows = C.fetchall()
-        print(rows)
+            con.commit()
+            rows = C.fetchall()
+            print(rows)
+
+
 
 track = Tracker()
-track.get_msg_bot('Виагра')
+track.get_msg_bot('Новирин')
 # if track.eat_method() == False:
 #     print('False')
 # print(track.eat_method()[3])
