@@ -13,7 +13,7 @@ tracker = Tracker()
 bot = telebot.TeleBot(TOKEN_SERGEY)
 logger = telebot.logger
 telebot.logger.setLevel(logging.DEBUG)
-u_choices = []
+
 
 
 
@@ -26,7 +26,7 @@ def send_welcome(message):
 
 def check_pharm(message):
     global msg
-    u_choice = message.text
+    u_choice = message.text.replace(" ","-")
     if tracker.check_is_exist(u_choice) == True:
         msg1 = bot.send_message(message.chat.id, 'Нашел препарат! Выберите, что конкретно хотите узнать?')
         button_subustance = types.KeyboardButton(text="Состав")
@@ -38,9 +38,14 @@ def check_pharm(message):
         keyboard.row(button_subustance, button_method_eat)
         keyboard.row(button_indications, button_anti_indications)
         keyboard.add(button_affects)
-        msg = tracker.get_msg_bot(u_choice)
+        try:
+            msg = tracker.get_msg_bot(u_choice)
+        except Exception as e:
+            bot.send_message(message.text.id, e)
+            pass
         bot.send_photo(message.chat.id, msg['imagelink'])
         bot.register_next_step_handler(msg1, make_choice)
+        return tracker.make_link(u_choice)
     else:
         bot.send_message(message.chat.id, 'К сожалению, я не знаю такого препарата. Попробуйте найти здесь: https://tabletki.ua')
         sleep(1)
@@ -67,7 +72,7 @@ def make_choice(message):
 
 
 try:
-    bot.polling(timeout=15)
+    bot.polling(timeout=25)
 except requests.exceptions.ConnectionError:
     print('Connection error, try again please')
 

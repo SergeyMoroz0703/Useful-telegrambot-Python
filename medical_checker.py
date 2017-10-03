@@ -91,7 +91,7 @@ class Tracker():
             if msg in new_bad_list:
                 pass
             else:
-                list_substance.append(msg+'\n')
+                list_substance.append(msg.replace("'","")+'\n')
         #print(list_substance)
         msg_substance = []
         for i in list_substance:
@@ -106,7 +106,7 @@ class Tracker():
         while x < anti_indications -1:
             x = x+1
             msg1 = all_el[x].text
-            list_indications.append(msg1 + '\n')
+            list_indications.append(msg1.replace("'","") + '\n')
         #print(list_indications)
         msg_indications = []
         for i in list_indications:
@@ -124,7 +124,7 @@ class Tracker():
             if msg2 in new_bad_list:
                pass
             else:
-                list_anti_indications.append(msg2+'\n')
+                list_anti_indications.append(msg2.replace("'","")+'\n')
         #print(list_anti_indications)
         msg_anti_indications = []
         for i in list_anti_indications:
@@ -142,7 +142,7 @@ class Tracker():
             if msg3 in new_bad_list:
                 pass
             else:
-                list_meth_eat.append(msg3+'\n')
+                list_meth_eat.append(msg3.replace("'","")+'\n')
         #print(list_meth_eat)
         msg_meth_eat = []
         for i in list_meth_eat:
@@ -161,7 +161,7 @@ class Tracker():
             if msg in new_bad_list:
                 pass
             else:
-                list_overdose.append(msg+'\n')
+                list_overdose.append(msg.replace("'","")+'\n')
         msg_overdose = []
         for i in list_overdose:
             if i not in msg_overdose:
@@ -177,7 +177,7 @@ class Tracker():
             if msg4 in new_bad_list:
                 pass
             else:
-                list_affects.append(msg4+'\n')
+                list_affects.append(msg4.replace("'","")+'\n')
         #print(list_affects)
         msg_affects = []
         for i in list_affects:
@@ -261,13 +261,14 @@ class Tracker():
             except Exception as e:
                 print(e)
             C = con.cursor()
-            C.execute("""insert into pharm1 (name,
+            try:
+                C.execute("""insert into pharm1 (name,
  substance,
   indications,
    anti_indications,
     method_eat,
      affects,
-      imagelink) VALUES ('{pharm_name}', '{substances}', '{indicat}', '{anti_ind}', '{meth_eat}', '{affect}', '{image}') returning id, name""".format(
+      imagelink) VALUES ('{pharm_name}', '{substances}', '{indicat}', '{anti_ind}', '{meth_eat}', '{affect}', '{image}') returning id, name, imagelink""".format(
                                                   pharm_name=u_choice,
                                                   substances=str(msg['substance']),
                                                   indicat=str(msg['indications']),
@@ -275,9 +276,13 @@ class Tracker():
                                                   meth_eat=str(msg['method_eat']),
                                                   affect=str(msg['affects']),
                                                   image=image_link))
-            con.commit()
-            rowss = C.fetchall()
-            print(rowss)
+
+                con.commit()
+                rowss = C.fetchall()
+                print(rowss)
+            except psycopg2.ProgrammingError as e:
+                print (e)
+                print('Cant add to database')
 
             dict_to_return = {
                 'substance': msg['substance'],
@@ -292,7 +297,7 @@ class Tracker():
 
 
 # track = Tracker()
-# track.check_is_exist('Солпадеин')
-
-
-
+# list12 = ['Нимесил', 'Смекта', 'Парацетамол', 'Левомицетин', 'Левомеколь', 'Омез', 'Азитромицин', 'Ибупрофен', 'Цефтриаксон', 'Метронидазол', 'Аугментин', 'Лоратадин', 'Амоксиклав', 'Актовегин', 'Энтерофурил', 'Сумамед', 'АЦЦ', 'Фуразолидон', 'Ремантадин', 'Мидокалм', 'Фурадонин', 'Регидрон', 'Спазмалгон', 'Цитрамон', 'Троксевазин']
+# for i in list12:
+#     track.get_msg_bot(i)
+#     time.sleep(1)
