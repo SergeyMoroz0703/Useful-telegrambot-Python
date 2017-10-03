@@ -83,7 +83,7 @@ class Tracker():
             affects = list[5]
         except:
             affects = list[4]
-        list_substance =[]                                              #this part of code is for MSG about substance
+        list_substance =[]
         z = substance
         while z < (indications-1):
             z = z+1
@@ -98,10 +98,10 @@ class Tracker():
             if i not in msg_substance:
                 msg_substance.append(i)
         msg_substance = ''.join(msg_substance)
-        #print(msg_substance)                                                                         #       end here
+        #print(msg_substance)
 
 
-        list_indications = []                                           # this part of code for MSG about indications
+        list_indications = []
         x = indications -1
         while x < anti_indications -1:
             x = x+1
@@ -113,10 +113,10 @@ class Tracker():
             if i not in msg_indications:
                 msg_indications.append(i)
         msg_indications = ''.join(msg_indications)
-        #print(msg_indications)                                                    #end here
+        #print(msg_indications)
 
 
-        list_anti_indications = []                                 # this part of code for MSG about antiindications
+        list_anti_indications = []
         c = anti_indications -1
         while c < method_to_eat -1:
             c = c+1
@@ -131,7 +131,7 @@ class Tracker():
             if i not in msg_anti_indications:
                 msg_anti_indications.append(i)
         msg_anti_indications = ''.join(msg_anti_indications)
-        #print(msg_anti_indications)                                                     # end here
+        #print(msg_anti_indications)
 
 
         list_meth_eat = []
@@ -169,11 +169,9 @@ class Tracker():
         msg_overdose = ''.join(msg_overdose)
 
 
-
-
         list_affects = []
         b = affects -1
-        while b < len(all_el) -13: #len(all_el) -2:
+        while b < len(all_el) -13:
             b = b+1
             msg4 = all_el[b].text
             if msg4 in new_bad_list:
@@ -218,7 +216,6 @@ class Tracker():
         except Exception as e:
             print(e)
         C = con.cursor()
-        # C.execute("select name from pharm1 where name = '{name}'".format(name=u_choice))
         C.execute(
                 "select substance, indications, anti_indications, method_eat, affects, imagelink from pharm1 where name = '{name}'".format(
                     name=u_choice))
@@ -247,11 +244,9 @@ class Tracker():
             return rows_msg
         else:
             obj_list = self.eat_method(self.get_html(self.make_link(u_choice)))
-            try:
-                list = obj_list[0]
-                print(obj_list)
-            except:
-                print('Не корректное название препарата')
+
+            list = obj_list[0]
+            print(obj_list)
             image_link = obj_list[1]
             msg = self.get_msg_substance(list)
             msg_substance = msg['substance']
@@ -284,13 +279,20 @@ class Tracker():
             rowss = C.fetchall()
             print(rowss)
 
-
-            return msg
+            dict_to_return = {
+                'substance': msg['substance'],
+                'indications': msg['indications'],
+                'anti_indications': msg['anti_indications'],
+                'method_eat': msg['method_eat'],
+                'affects': msg['affects'],
+                'imagelink': image_link,
+            }
+            return dict_to_return
 
 
 
 # track = Tracker()
-# track.check_is_exist('Виагра')
+# track.check_is_exist('Солпадеин')
 
 
 
