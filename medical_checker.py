@@ -1,9 +1,5 @@
-import csv
-import re
 import requests
-import time
 from bs4 import BeautifulSoup
-import sys
 import psycopg2
 from learn_env.sergeyGit.config import DB_PWD, new_bad_list
 
@@ -14,12 +10,19 @@ class Tracker():
         self.url = url
 
 
+# Function make_link() returning link depend of u_choice (user choice) and of selr.url.
     def make_link(self, u_choice):
         link = self.url + '/' + u_choice + '/'
-        #print(link)
         return link
 
 
+    def get_html(self, url):
+        r = requests.get(url)
+        return r.text
+
+
+# div class='goog-trans-section' exist only in case when u_choice pills was founded in html.
+# Function need to check is correct user input (u_choice) or not.
     def check_is_exist(self, u_choice):
         soup = BeautifulSoup(self.get_html(self.make_link(u_choice)), "html.parser")
         check = soup.find_all('div', class_='goog-trans-section')
@@ -31,14 +34,8 @@ class Tracker():
             return False
 
 
-    def get_html(self, url):
-        r = requests.get(url)
-        #print(r.text)
-        return r.text
-
-
-    def eat_method(self, html):
-        #html = self.get_html(self.make_link(u_choice))
+#Function get_main_list collects all elements with necessarry id's and search link with image, returning list
+    def get_main_list(self, html):
         soup = BeautifulSoup(html, "html.parser")
         list = []
         names = soup.find('div', class_='goog-trans-section')
@@ -73,8 +70,10 @@ class Tracker():
         return obj_list
 
 
-    def get_msg_substance(self, list):
-        substance = list[0]
+#Function get_msg_substance find and returning all elements that apply to different group about piils (like substance,
+#affects etc)
+    def get_msgs_all(self, list):
+        substance = list[0]         #getting indexes of all necessarry tags (like <h2>)
         indications = list[1]
         anti_indications = list[2]
         method_to_eat = list[3]
@@ -87,19 +86,17 @@ class Tracker():
         z = substance
         while z < (indications-1):
             z = z+1
-            msg = all_el[z].text
-            if msg in new_bad_list:
+            msg = all_el[z].text   #getting text from all elements between two tags (this text which mean all substance)
+            if msg in new_bad_list: #here deleting are repetitive strings
                 pass
             else:
                 list_substance.append(msg.replace("'","")+'\n')
-        #print(list_substance)
+
         msg_substance = []
         for i in list_substance:
             if i not in msg_substance:
                 msg_substance.append(i)
-        msg_substance = ''.join(msg_substance)
-        #print(msg_substance)
-
+        msg_substance = ''.join(msg_substance) # creating new unique message about substance of pill which user choose
 
         list_indications = []
         x = indications -1
@@ -107,14 +104,11 @@ class Tracker():
             x = x+1
             msg1 = all_el[x].text
             list_indications.append(msg1.replace("'","") + '\n')
-        #print(list_indications)
         msg_indications = []
         for i in list_indications:
             if i not in msg_indications:
                 msg_indications.append(i)
         msg_indications = ''.join(msg_indications)
-        #print(msg_indications)
-
 
         list_anti_indications = []
         c = anti_indications -1
@@ -125,14 +119,11 @@ class Tracker():
                pass
             else:
                 list_anti_indications.append(msg2.replace("'","")+'\n')
-        #print(list_anti_indications)
         msg_anti_indications = []
         for i in list_anti_indications:
             if i not in msg_anti_indications:
                 msg_anti_indications.append(i)
         msg_anti_indications = ''.join(msg_anti_indications)
-        #print(msg_anti_indications)
-
 
         list_meth_eat = []
         v = method_to_eat -1
@@ -143,15 +134,11 @@ class Tracker():
                 pass
             else:
                 list_meth_eat.append(msg3.replace("'","")+'\n')
-        #print(list_meth_eat)
         msg_meth_eat = []
         for i in list_meth_eat:
             if i not in msg_meth_eat:
                 msg_meth_eat.append(i)
         msg_meth_eat = ''.join(msg_meth_eat)
-        #print(msg_meth_eat)
-
-
 
         list_overdose = []
         v = overdose -1
@@ -168,7 +155,6 @@ class Tracker():
                 msg_overdose.append(i)
         msg_overdose = ''.join(msg_overdose)
 
-
         list_affects = []
         b = affects -1
         while b < len(all_el) -13:
@@ -178,14 +164,12 @@ class Tracker():
                 pass
             else:
                 list_affects.append(msg4.replace("'","")+'\n')
-        #print(list_affects)
         msg_affects = []
         for i in list_affects:
             if i not in msg_affects:
                 msg_affects.append(i)
         msg_affects = ''.join(msg_affects)
-        #print(msg_affects)
-        result_dict = {
+        result_dict = {                         #Creating dictionary with all messages about user choice
             'substance':msg_substance,
             'indications': msg_indications,
             'anti_indications': msg_anti_indications,
@@ -197,6 +181,7 @@ class Tracker():
         return result_dict
 
 
+#Before start parsing the donor site, trying to search info in database (PostgeSQL).If exist - returning True
     def check_exist_database(self, u_choice):
         try:
             con = psycopg2.connect(host='localhost', user='sergeymoroz', password=DB_PWD, database='test1')
@@ -210,6 +195,7 @@ class Tracker():
             return False
 
 
+#Returning information from database about user choice (previously checking if exist)
     def get_db_data(self, u_choice):
         try:
             con = psycopg2.connect(host='localhost', user='sergeymoroz', password=DB_PWD, database='test1')
@@ -217,12 +203,14 @@ class Tracker():
             print(e)
         C = con.cursor()
         C.execute(
-                "select substance, indications, anti_indications, method_eat, affects, imagelink from pharm1 where name = '{name}'".format(
-                    name=u_choice))
+                "select substance, indications, anti_indications, method_eat, affects, imagelink from pharm1 "
+                "where name = '{name}'".format(name=u_choice))
         rows = C.fetchone()
         return rows
 
 
+#Here final message is formed. First checking if user choice exist in database, if yes - forming dictionary from
+#database. If not - forming message dictionary from parsed message(get_msgs_all()) and added to database.
     def get_msg_bot(self, u_choice):
         if self.check_exist_database(u_choice) == True:
             print('Connecting to database')
@@ -241,14 +229,15 @@ class Tracker():
                 'affects':rows[4],
                 'imagelink':rows[5],
             }
+            print(rows_msg['substance'])
             return rows_msg
         else:
-            obj_list = self.eat_method(self.get_html(self.make_link(u_choice)))
+            obj_list = self.get_main_list(self.get_html(self.make_link(u_choice)))
 
             list = obj_list[0]
             print(obj_list)
             image_link = obj_list[1]
-            msg = self.get_msg_substance(list)
+            msg = self.get_msgs_all(list)
             msg_substance = msg['substance']
             msg_indications = msg['indications']
             msg_antiindications = msg['anti_indications']
@@ -295,9 +284,5 @@ class Tracker():
             return dict_to_return
 
 
-
 # track = Tracker()
-# list12 = ['Нимесил', 'Смекта', 'Парацетамол', 'Левомицетин', 'Левомеколь', 'Омез', 'Азитромицин', 'Ибупрофен', 'Цефтриаксон', 'Метронидазол', 'Аугментин', 'Лоратадин', 'Амоксиклав', 'Актовегин', 'Энтерофурил', 'Сумамед', 'АЦЦ', 'Фуразолидон', 'Ремантадин', 'Мидокалм', 'Фурадонин', 'Регидрон', 'Спазмалгон', 'Цитрамон', 'Троксевазин']
-# for i in list12:
-#     track.get_msg_bot(i)
-#     time.sleep(1)
+# track.get_msg_bot('Омез')
