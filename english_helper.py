@@ -5,7 +5,7 @@ from googletrans import Translator
 translator = Translator()
 
 
-bot = telebot.TeleBot("586264599:AAGxZI69-kOoqj4B3rWtMxSGdVKrr59d4eU", threaded=False)
+bot = telebot.TeleBot(<TOKEN>, threaded=False)
 bot.remove_webhook()
 time.sleep(1)
 
