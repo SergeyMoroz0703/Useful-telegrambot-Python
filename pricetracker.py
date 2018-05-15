@@ -49,23 +49,6 @@ class Tracker():
         except requests.exceptions.ConnectionError:
             print('Connection error, try again please')
 
-    # def search_price(self):                                                                                           # this method just for python usage, not for tb api
-    #     try:
-    #         all_links = self.get_all_links(self.get_html(self.url))
-    #         u_choice = input('enter currency name')
-    #         if str('https://coinmarketcap.com/currencies/' + u_choice + '/') in all_links:
-    #             try:
-    #                 z = self.get_html('https://coinmarketcap.com/currencies/' + u_choice + '/')
-    #                 self.get_html_data(z)
-    #                 time.sleep(1)
-    #             except requests.exceptions.ConnectionError:
-    #                 print('Connection error, try again please')
-    #         else:
-    #             print('I dont know this cryptocurrency: ' + u_choice + '. Please, try again.')
-    #     except requests.exceptions.ConnectionError:
-    #         print('Connection error, try again please')
-
-
 
     def search_price(self, u_choice):
         try:
@@ -86,8 +69,3 @@ class Tracker():
                 return None
         except requests.exceptions.ConnectionError:
             print('Connection error, try again please')
-
-
-
-# track = Tracker()
-# track.search_price()
